@@ -1,8 +1,11 @@
+
 import { StatsCards } from '@/components/dashboard/stats-card';
 import { EngagementChart } from '@/components/dashboard/engagement-chart';
 import { RecentCampaigns } from '@/components/dashboard/recent-campaigns';
 
-export default function Dashboard() {
+
+export default async function Dashboard() {
+  
   return (
     <div className="space-y-8">
       {/* Header */}

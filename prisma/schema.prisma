@@ -14,7 +14,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
   id           String     @id @default(cuid())
   clerkId      String     @unique
@@ -25,18 +24,20 @@ model User {
 }
 
 model Email {
-  id      String   @id @default(cuid())
-  userId  String
-  to      String
-  subject String
-  body    String
-  sentAt  DateTime @default(now())
-  user    User     @relation(fields: [userId], references: [id])
+  id         String      @id @default(cuid())
+  userId     String
+  to         String
+  subject    String
+  body       String
+  sentAt     DateTime    @default(now())
+  user       User        @relation(fields: [userId], references: [id])
+  openEvents OpenEvent[]
 }
 
 model OpenEvent {
   id       String   @id @default(cuid())
-  email    String
+  emailId  String
+  email    Email    @relation(fields: [emailId], references: [id])
   openedAt DateTime @default(now())
 }
 

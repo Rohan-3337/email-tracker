@@ -1,6 +1,12 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   LineChart,
   Line,
@@ -11,70 +17,71 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+import { useEffect, useState } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const data = [
-  { name: 'Jan', opens: 4000, clicks: 2400, bounces: 400 },
-  { name: 'Feb', opens: 3000, clicks: 1398, bounces: 210 },
-  { name: 'Mar', opens: 2000, clicks: 9800, bounces: 290 },
-  { name: 'Apr', opens: 2780, clicks: 3908, bounces: 200 },
-  { name: 'May', opens: 1890, clicks: 4800, bounces: 181 },
-  { name: 'Jun', opens: 2390, clicks: 3800, bounces: 250 },
-  { name: 'Jul', opens: 3490, clicks: 4300, bounces: 210 },
-];
+interface EngagementData {
+  name: string;
+  opens: number;
+}
 
 export function EngagementChart() {
+  const [data, setData] = useState<EngagementData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/email/engagement')
+      .then((res) => res.json())
+      .then(setData)
+      .catch((err) => console.error('Error loading engagement data:', err))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <Card className="col-span-4">
       <CardHeader>
         <CardTitle>Email Engagement Overview</CardTitle>
         <CardDescription>
-          Track your email performance metrics over time
+          Track how many emails were opened each month.
         </CardDescription>
       </CardHeader>
       <CardContent className="pl-2">
-        <ResponsiveContainer width="100%" height={350}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              dataKey="name"
-              stroke="#888888"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis
-              stroke="#888888"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(value) => `${value}`}
-            />
-            <Tooltip />
-            <Legend />
-            <Line
-              type="monotone"
-              dataKey="opens"
-              stroke="#3b82f6"
-              strokeWidth={2}
-              name="Opens"
-            />
-            <Line
-              type="monotone"
-              dataKey="clicks"
-              stroke="#10b981"
-              strokeWidth={2}
-              name="Clicks"
-            />
-            <Line
-              type="monotone"
-              dataKey="bounces"
-              stroke="#ef4444"
-              strokeWidth={2}
-              name="Bounces"
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        {loading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-[350px] w-full rounded-md" />
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={350}>
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="name"
+                stroke="#888888"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                stroke="#888888"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="opens"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                name="Opens"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
       </CardContent>
     </Card>
   );
 }
+

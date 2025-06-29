@@ -25,9 +25,12 @@ import {
   Link,
   Image,
   Sparkles,
+  Loader2,
 } from 'lucide-react';
 import { SmartEmailDialog } from '../SmartEmailDialog';
 import { Template } from '@/lib/generated/prisma';
+import toast from 'react-hot-toast';
+import { SmartFormSubmit } from '@/lib/actions/SmartFormSubmit';
 
 export function EmailEditor() {
   const [recipient, setRecipient] = useState('');
@@ -38,6 +41,7 @@ export function EmailEditor() {
   const [loading, setLoading] = useState(false);
   const [smartForm, setSmartForm] = useState(false);
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [isSubmit,setIsSubmit] = useState(false);
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -65,49 +69,54 @@ export function EmailEditor() {
       setCategory(data.category);
       setName(data.name);
     } else {
-      alert('LLM Error: ' + JSON.stringify(data));
+      toast.error("LLM Error",{position:"top-center"})
     }
   };
 
-  const handleSubmit = async (EmailData: any) => {
-    try {
-      const response = await fetch('/api/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          html: EmailData.content,
-          subject: EmailData.subject,
-          to: EmailData.recipientName,
-        }),
-      });
+ 
+  //   try {
+  //     const response = await fetch('/api/send', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({
+  //         html: EmailData.content,
+  //         subject: EmailData.subject,
+  //         to: EmailData.recipientName,
+  //       }),
+  //     });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        alert(`Failed to send email: ${errorData.error || 'Unknown error'}`);
-        return;
-      }
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       toast.error(`Failed to send email: ${errorData.error || 'Unknown error'}`,{position:"top-center"});
+  //       return;
+  //     }
 
-      alert('✅ Email sent successfully!');
-    } catch (error) {
-      alert('Failed to send email due to network or server error.');
-    }
-  };
+  //     toast.success(' Email sent successfully!',{position:"top-center"});
+  //   } catch (error) {
+  //     toast.error('Failed to send email due to network or server error.',{
+  //       position:"top-center"
+  //     });
+  //   }
+  // };
 
   const handleTemplate = async () => {
     try {
+      setIsSubmit(true);
       const res = await fetch('/api/template', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subject, content, name, category }),
       });
       const data = await res.json();
-      alert('✅ Template saved successfully');
+      if(!res.ok) return toast.error(data?.error,{position:"top-center"});
+      setIsSubmit(false);
+      toast.success('Template saved successfully',{position:"top-center"});
       setCategory('');
       setContent('');
       setName('');
       setSubject('');
     } catch (error) {
-      alert('Template save failed: ' + error);
+      toast.error('Template save failed: ' + error,{position:"top-center"});
     }
   };
 
@@ -137,10 +146,10 @@ export function EmailEditor() {
                 <Sparkles className="w-4 h-4 mr-2" />
                 {loading ? 'Thinking...' : 'AI Assist'}
               </Button>
-              <Button variant="outline" size="sm">
+              {/* <Button variant="outline" size="sm">
                 <Save className="w-4 h-4 mr-2" />
                 Save Draft
-              </Button>
+              </Button> */}
             </div>
           </CardTitle>
         </CardHeader>
@@ -218,13 +227,16 @@ export function EmailEditor() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-4">
-            <div className="flex items-center space-x-2">
+          <div className="flex items-center justify-end pt-4">
+            {/* <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm"><Paperclip className="w-4 h-4 mr-2" />Attach Files</Button>
               <Button variant="outline" size="sm">Schedule Send</Button>
-            </div>
+            </div> */}
             <div className="flex items-center space-x-2">
-              <Button variant="outline" onClick={handleTemplate}>Save as Template</Button>
+              <Button variant="outline" onClick={handleTemplate} disabled={isSubmit}>
+                {isSubmit &&<Loader2 className=' w-4 h-4 mr-2 animate-spin'/>}
+                Save as Template
+                </Button>
               <Button onClick={() => setSmartForm(true)}>
                 <Send className="w-4 h-4 mr-2" /> Send Email
               </Button>
@@ -240,7 +252,7 @@ export function EmailEditor() {
           content,
           recipientName: recipient,
         }}
-        onSubmit={handleSubmit}
+        onSubmit={SmartFormSubmit}
         onOpen={smartForm}
         setOpen={setSmartForm}
       />

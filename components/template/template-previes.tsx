@@ -21,24 +21,23 @@ interface TemplatePreviewProps {
   };
   open: boolean;
   onClose: () => void;
+  useTemplate:(template:any)=>void
 }
 
-export function TemplatePreview({ template, open, onClose }: TemplatePreviewProps) {
+export function TemplatePreview({ template, open, onClose,useTemplate }: TemplatePreviewProps) {
   const templateContent = {
     subject: `Subject: ${template.subject}`,
     body: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
         <h2 style="color: #333;">${template.name}</h2>
         <p style="color: #555; line-height: 1.5;">
-          Hello {{recipient_name}},
+        
         </p>
         <p style="color: #555; line-height: 1.5;">
           ${template.content}
         </p>
         <p style="color: #555; line-height: 1.5;">
-          Best regards,<br>
-          {{sender_name}}<br>
-          {{sender_company}}
+         
         </p>
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; font-size: 12px; color: #999;">
           <p>
@@ -104,7 +103,9 @@ export function TemplatePreview({ template, open, onClose }: TemplatePreviewProp
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
-          <Button>
+          <Button onClick={()=>{
+            useTemplate(template);
+          }}>
             Use This Template
           </Button>
         </div>

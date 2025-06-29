@@ -1,113 +1,133 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Eye, MousePointer, TrendingUp } from 'lucide-react';
+import { MoreHorizontal, Eye, TrendingUp } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import EmailDetailsDialog from '../ui/EmailDetailsDialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const campaigns = [
-  {
-    id: 1,
-    name: 'Summer Sale 2024',
-    status: 'Sent',
-    sent: '2,456',
-    opens: '1,678',
-    clicks: '423',
-    openRate: '68.3%',
-    clickRate: '17.2%',
-    sentDate: '2024-01-15',
-  },
-  {
-    id: 2,
-    name: 'Product Launch Newsletter',
-    status: 'Sending',
-    sent: '1,234',
-    opens: '892',
-    clicks: '156',
-    openRate: '72.3%',
-    clickRate: '12.6%',
-    sentDate: '2024-01-14',
-  },
-  {
-    id: 3,
-    name: 'Weekly Newsletter #45',
-    status: 'Draft',
-    sent: '0',
-    opens: '0',
-    clicks: '0',
-    openRate: '0%',
-    clickRate: '0%',
-    sentDate: '2024-01-13',
-  },
-];
+interface Campaign {
+  id: string;
+  name: string;
+  status: 'Sent' | 'Draft';
+  opened: number;
+  totalSent: number;
+  sentDate: string;
+}
 
 export function RecentCampaigns() {
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/email/recent')
+      .then((res) => res.json())
+      .then(setCampaigns)
+      .catch((err) => console.error('Error fetching recent campaigns:', err))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
-    <Card className="col-span-3">
-      <CardHeader>
-        <CardTitle>Recent Campaigns</CardTitle>
-        <CardDescription>Your latest email campaigns and their performance</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {campaigns.map((campaign) => (
-            <div
-              key={campaign.id}
-              className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex-1">
-                <div className="flex items-center space-x-3">
-                  <h4 className="font-medium">{campaign.name}</h4>
-                  <Badge
-                    variant={
-                      campaign.status === 'Sent'
-                        ? 'default'
-                        : campaign.status === 'Sending'
-                        ? 'secondary'
-                        : 'outline'
-                    }
-                  >
-                    {campaign.status}
-                  </Badge>
+    <>
+      <Card className="col-span-3">
+        <CardHeader>
+          <CardTitle>Recent Campaigns</CardTitle>
+          <CardDescription>
+            Your latest email templates and their engagement.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-4 border rounded-lg space-y-2">
+                  <Skeleton className="h-4 w-1/3" />
+                  <Skeleton className="h-3 w-1/4" />
+                  <Skeleton className="h-3 w-1/2" />
                 </div>
-                <div className="flex items-center space-x-6 mt-2 text-sm text-muted-foreground">
-                  <div className="flex items-center space-x-1">
-                    <Eye className="w-3 h-3" />
-                    <span>{campaign.openRate}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <MousePointer className="w-3 h-3" />
-                    <span>{campaign.clickRate}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <TrendingUp className="w-3 h-3" />
-                    <span>{campaign.sent} sent</span>
-                  </div>
-                </div>
+              ))
+            ) : campaigns.length === 0 ? (
+              <div className="text-muted-foreground text-sm text-center py-6">
+                No campaigns found yet.
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>View Details</DropdownMenuItem>
-                  <DropdownMenuItem>Edit Campaign</DropdownMenuItem>
-                  <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            ) : (
+              campaigns.map((campaign) => (
+                <div
+                  key={campaign.id}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between space-x-3 mb-1">
+                      <h4 className="font-medium">{campaign.name}</h4>
+                      <Badge variant={'default'} className="mb-8">
+                        {"Sent"}
+                      </Badge>
+                    </div>
+
+                    <div className="flex items-center space-x-3 mt-2 text-sm text-muted-foreground">
+                      <div className="flex items-center space-x-1">
+                        <Eye className="w-3 h-3" />
+                        <Badge className={campaign?.opened ? "bg-green-400" : "bg-yellow-200 text-muted-foreground"}>
+                          {campaign?.opened ? 'Opened' : 'Not Opened'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <TrendingUp className="w-3 h-3" />
+                        <Badge variant="secondary">{campaign.totalSent} sent</Badge>
+                      </div>
+                      <div className="text-xs ml-4">{campaign.sentDate}</div>
+                    </div>
+                  </div>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSelectedId(campaign.id);
+                          setOpenDialog(true);
+                        }}
+                      >
+                        View Details
+                      </DropdownMenuItem>
+                     
+                      <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <EmailDetailsDialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        emailId={selectedId}
+      />
+    </>
   );
 }
+

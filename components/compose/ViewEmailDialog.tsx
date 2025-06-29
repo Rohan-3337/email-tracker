@@ -9,10 +9,12 @@ interface ViewEmailDialogProps {
   open: boolean;
   onClose: () => void;
   email: {
-    subject: string;
-    to: string;
-    body: string;
-    sentAt: Date;
+    id: string;
+  to: string;
+  subject: string;
+  body: string;
+  sentAt: string;
+  openEvents: { openedAt: string }[];
   };
 }
 

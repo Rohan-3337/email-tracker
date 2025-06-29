@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(req: NextRequest) {
   const { subject, html, to } = await req.json();
   const { userId } = await auth();
-
+  console.log(subject,html,to);
   // 1. Ensure user is authenticated
   const user = await prisma.user.findUnique({ where: { clerkId: userId! } });
   if (!user?.refreshToken) {
@@ -24,8 +24,8 @@ export async function POST(req: NextRequest) {
 
   // 3. Inject Open Tracking Pixel with correct emailId
   const emailId = email.id;
-  const trackingPixel = `<img src="https://096d-2401-4900-1f35-9b01-5132-5227-42c7-2a1b.ngrok-free.app/api/track/open?emailId=${emailId}" width="1" height="1" style="display:none;" />`;
-
+  const trackingPixel = `<img src="${process.env.NEXT_DOMAIN_URL}api/track/open?emailId=${emailId}" width="1" height="1" style="display:none;" />`;
+  console.log(trackingPixel);
   const trackedHtml = html + trackingPixel;
 
   // 4. Send the actual email with tracking pixel

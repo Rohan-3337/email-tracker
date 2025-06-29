@@ -7,11 +7,12 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import EmailPreview from './EmailPreview'; // Import preview component
+import EmailPreview from './EmailPreview';
+import { Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 type EmailData = {
   subject: string;
@@ -26,11 +27,14 @@ export function SmartEmailDialog({
   setOpen,
 }: {
   initialData: EmailData;
-  onSubmit: (data: EmailData) => void;
+  onSubmit: (data: EmailData) => any;
   onOpen: boolean;
-  setOpen:(data:boolean)=>void;
+  setOpen: (data: boolean) => void;
 }) {
   const [variables, setVariables] = useState<Record<string, string>>({});
+  const [isLoading,setIsLoading] =useState(false);
+  const router = useRouter();
+
 
   const detectedVars = useMemo(() => {
     const regex = /\{\{(.*?)\}\}/g;
@@ -39,18 +43,25 @@ export function SmartEmailDialog({
       ...Array.from(initialData.content.matchAll(regex), (m) => m[1]),
     ];
     const baseVars = [...new Set(vars)];
-    if (initialData.recipientName?.includes('{{')) {
+
+   
+    if (!initialData.recipientName) {
       baseVars.push('recipient_name');
     }
+
     return baseVars;
   }, [initialData]);
 
+
   useEffect(() => {
     const obj: Record<string, string> = {};
-    detectedVars.forEach((v) => (obj[v] = ''));
+    detectedVars.forEach((v) => {
+      obj[v] = '';
+    });
     setVariables(obj);
   }, [detectedVars]);
 
+ 
   const replaceVars = (text: string) =>
     Object.entries(variables).reduce(
       (acc, [key, val]) =>
@@ -60,32 +71,38 @@ export function SmartEmailDialog({
 
   const finalSubject = replaceVars(initialData.subject);
   const finalContent = replaceVars(initialData.content);
-  const recipientName = variables['recipient_name'] || initialData.recipientName;
+  const recipientName =
+    initialData.recipientName || variables['recipient_name'] || '';
 
-  const handleSubmit = () => {
+ 
+  const handleSubmit = async() => {
     for (const [key, value] of Object.entries(variables)) {
       if (!value.trim()) return;
     }
 
-    onSubmit({
+    if (!recipientName.trim()) return;
+    setIsLoading(true);
+     await onSubmit({
       subject: finalSubject,
       content: finalContent,
       recipientName,
-    });
-
+    }).then(()=>{
+      setIsLoading(false);
+      router.refresh();
+      window.location.reload();
+    }).catch(()=>{
+      setIsLoading(false)
+    })
+   
     setOpen(false);
   };
 
   return (
-    <Dialog open={onOpen} onOpenChange={()=>setOpen(false)} >
-      <DialogTrigger asChild>
-        <Button onClick={() => setOpen(true)}>Send Email</Button>
-      </DialogTrigger>
-
+    <Dialog open={onOpen} onOpenChange={() => setOpen(false)}>
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Complete Email Details</DialogTitle>
         </DialogHeader>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto" > {/* wider dialog */}
 
         <div className="flex flex-col gap-4 mt-2">
           {Object.keys(variables).map((key) => (
@@ -105,19 +122,20 @@ export function SmartEmailDialog({
           ))}
         </div>
 
-        {/* ✅ Preview Section */}
         <EmailPreview
           recipient={recipientName}
           subject={finalSubject}
           content={finalContent}
         />
 
-       
-       <div className="flex justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={() => setOpen(false)}>
+        <div className="flex justify-end gap-2 pt-4">
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>Send</Button>
+          <Button onClick={handleSubmit} disabled={isLoading}>
+            {isLoading &&<Loader2 className=' mr-2 w-4 h-4 animate-spin'/>}
+            Send
+            </Button>
         </div>
       </DialogContent>
     </Dialog>
